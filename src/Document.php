@@ -2,6 +2,8 @@
 
 namespace src;
 
+use Exception;
+
 class Document
 {
 
@@ -17,38 +19,48 @@ class Document
 
     /**
      * @param string $html html страницы
+     * @throws Exception
      */
     public function __construct($html)
     {
         /** Получаем DOCTYPE и удаляем его из контента чтобы не мешал */
-        $this->doctype = Common::parseOne('/<!DOCTYPE (.+)>/m', $html);
-        Common::cut('/<!DOCTYPE (.+)>/m', $html);
+        $this->doctype = Common::parseOne('/<!DOCTYPE (.+)>/im', $html);
+        Common::cut('/<!DOCTYPE (.+)>/im', $html);
         /** Ищем <html>, если нет - создаем */
-        if(!$htmlInside = Common::parseOne('/<html.*>(.*)<\/html>/musU', $html)) {
+        if(!$htmlInside = Common::parseOne('/<html.*>(.*)<\/html>/imusU', $html)) {
             $htmlInside = '<head></head><body>'.$html.'</body>';
         }
         $htmlTag = new Element('html', []);
         /** Получаем содержимое <bead> и <body> */
-        $headInside = Common::parseOne('/<head.*>(.*)<\/head>/musU', $htmlInside);
-        $bodyInside = Common::parseOne('/<body.*>(.*)<\/body>/musU', $htmlInside);
+        $headCode = Common::parseOne('/(<head.*>.*<\/head>)/imusU', $htmlInside);
+        $bodyCode = Common::parseOne('/(<body.*>.*<\/body>)/imusU', $htmlInside);
         /** Парсим дерево */
-        $headTag = new Element('head', Common::parseDOM($headInside));
-        $bodyTag = new Element('body', Common::parseDOM($bodyInside));
-        $htmlTag->append($headTag);
-        $htmlTag->append($bodyTag);
+        $htmlTag->append(Common::parseDOM($headCode)[0]);
+        $htmlTag->append(Common::parseDOM($bodyCode)[0]);
         $this->dom = $htmlTag;
     }
 
+    /**
+     * @return Element
+     */
     public function getHtml()
     {
         return $this->dom;
     }
 
+    /**
+     * @return Element
+     * @throws Exception
+     */
     public function getHead()
     {
         return $this->dom->getChildren('head');
     }
 
+    /**
+     * @return Element
+     * @throws Exception
+     */
     public function getBody()
     {
         return $this->dom->getChildren('body');

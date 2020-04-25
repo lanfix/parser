@@ -2,6 +2,8 @@
 
 namespace src;
 
+use Exception;
+
 class Common
 {
 
@@ -62,11 +64,21 @@ class Common
     /**
      * Вырезать данные из строки по регулярке
      * @param string $regExp регулярное выражение
-     * @param string $htmlContainPointer ссылка на переменную с контентом
+     * @param string $containPointer переменная с контентом
      */
-    public static function cut(string $regExp, string &$htmlContainPointer)
+    public static function cut(string $regExp, string &$containPointer)
     {
-        $htmlContainPointer = preg_replace($regExp, '', $htmlContainPointer);
+        $containPointer = preg_replace($regExp, '', $containPointer);
+    }
+
+    /**
+     * Оставить по пробелу между словами. Остальные удалить.
+     * @param string $containPointer переменная с контентом
+     */
+    public static function trim(string &$containPointer)
+    {
+        $containPointer = trim($containPointer);
+        $containPointer = preg_replace('/([\s]|[\t]|[\n]|[\r\n])+/ui', ' ', $containPointer);
     }
 
     /**
@@ -83,6 +95,7 @@ class Common
      * Спарсить HTML в объектную структуру
      * @param string $html
      * @return Element[]
+     * @throws Exception
      */
     public static function parseDOM(string $html)
     {
@@ -108,12 +121,8 @@ class Common
         for($iter = 0; $iter < $htmlLength; $iter++) {
             $sym = $html[$iter];
             /** Завершение ооткрывающего тега */
-            if($tagOpen && $sym === '>' && !$isCloseTag && (
-                /** Атрибуты и не начинались */
-                (!$isAttr) ||
-                /** Если '>' встретилась внутри кавычек - пропускаем */
-                ($isAttr && !$attrInQuotes)
-            )) {
+            if($tagOpen && $sym === '>' && !$isCloseTag) {
+                if($attrName) $attrList[$attrName] = $attrValue;
                 $tagName = strtolower($tagName);
                 $element = new Element($tagName, [], $attrList);
                 $parentElement->append($element);
@@ -125,14 +134,19 @@ class Common
                 $tagName = '';
                 $tagOpen = false;
                 $isAttr = false;
+                $attrName = '';
+                $attrValue = '';
+                $attrInQuotes = false;
+                $isAttrValue = false;
+                $isAttrValueArea = false;
                 $attrList = [];
             }
             /** Ищем начало атрибутов */
-            elseif($tagOpen && !$isAttr && self::symIsSpace($sym)) {
+            elseif($tagOpen && $tagName && !$isAttr && self::symIsSpace($sym)) {
                 $isAttr = true;
             }
             /** Ищем закрытие значения атрибута */
-            elseif($tagOpen && $isAttrValue &&
+            elseif($tagOpen && $isAttrValueArea && $isAttrValue &&
                 /** Значение было в кавычках */
                 ($attrInQuotes && in_array($sym, ['"', '\'']) ||
                 /** Значение было без кавычек - находим первый пробел */
@@ -146,12 +160,16 @@ class Common
                 $attrValue = '';
             }
             /** Ищем начало значения атрибута */
-            elseif($tagOpen && $isAttrValueArea && !self::symIsSpace($sym)) {
+            elseif($tagOpen && $isAttrValueArea && !$isAttrValue && !self::symIsSpace($sym)) {
                 if(in_array($sym, ['"', '\''])) {
                     $attrInQuotes = true;
                     continue;
                 }
+                $attrValue .= $sym;
                 $isAttrValue = true;
+            }
+            /** Собираем значение атрибута */
+            elseif($tagOpen && $isAttrValue) {
                 $attrValue .= $sym;
             }
             /** Ищем начало значения */
@@ -159,7 +177,7 @@ class Common
                 $isAttrValueArea = true;
             }
             /** Собираем имя атрибута */
-            elseif($tagOpen && $isAttr && !self::symIsSpace($sym)) {
+            elseif($tagOpen && $isAttr && !$isAttrValueArea && !self::symIsSpace($sym)) {
                 $attrName .= $sym;
             }
             /** Если закрывающий тег */

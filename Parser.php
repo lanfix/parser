@@ -16,6 +16,7 @@ class Parser
 
     /**
      * @param string $url url сайта который парсить
+     * @throws Exception
      */
     public function __construct($url)
     {

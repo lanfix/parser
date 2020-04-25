@@ -48,6 +48,11 @@ class Element
     private $attr = null;
 
     /**
+     * @var array список классов элемента
+     */
+    private $classes = [];
+
+    /**
      * Счетчик для генерации уникальных id элемента
      */
     private static $autoIncrement = 0;
@@ -71,6 +76,15 @@ class Element
         self::$autoIncrement++;
         /** Выставляем тип в зависимости от содержимого контента */
         $this->type = is_array($contain) ? 1 : ($contain === null ? 2 : 3);
+        /** Обрабатываем классы у элемента */
+        if($this->isTag() && $this->attr->class) {
+            $classesString = $this->attr->class;
+            Common::trim($classesString);
+            $this->attr->class = $classesString;
+            foreach(explode(' ', $classesString) ?: [] as $className) {
+                $this->classes[] = $className;
+            }
+        }
     }
 
     /**
@@ -111,7 +125,7 @@ class Element
      * Возвращеет пустой массив если ничего не найдено при выборке по классу.
      * Возвращает null если ичего не найдено при выборке в остальных случаях.
      * @param string $selector
-     * @return self[]|string|null
+     * @return self[]|self|string|null
      * @throws Exception
      */
     public function getChildren(string $selector = null)
@@ -125,11 +139,21 @@ class Element
         /** Распозначем что за селектор: */
         /** Выборка по ID */
         if(Common::match('/[#].+/ui', $selector)) {
-            // TODO
+            Common::cut('/[#]/ui', $selector);
+            foreach($this->contain as $element) {
+                if($selector === $element->getAttribute('id')) {
+                    return $element;
+                }
+            }
         }
         /** Выборка по классу */
         elseif(Common::match('/[\.].+/ui', $selector)) {
-            // TODO
+            Common::cut('/[\.]/ui', $selector);
+            foreach($this->contain as $element) {
+                if(in_array($selector, $element->classes)) {
+                    return $element;
+                }
+            }
         }
         /** Выборка по имени тега */
         else {
