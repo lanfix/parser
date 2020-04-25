@@ -114,10 +114,7 @@ class Common
                 /** Если '>' встретилась внутри кавычек - пропускаем */
                 ($isAttr && !$attrInQuotes)
             )) {
-                /**
-                 * При нулевой вложенности - кладем в общий массив, а когда
-                 * вложенность > 0, то наполняем соответствующий объект
-                 */
+                $tagName = strtolower($tagName);
                 $element = new Element($tagName, [], $attrList);
                 $parentElement->append($element);
                 /** Увеличиваем вложенность только ести тег не одиночный */
@@ -213,10 +210,7 @@ class Common
                 continue;
             }
         }
-
-        print_r($finalDOMElement->getChildren());
-        die;
-        return [];
+        return $finalDOMElement->getChildren();
     }
 
 }

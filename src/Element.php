@@ -2,7 +2,12 @@
 
 namespace src;
 
-/** DOM элемент */
+use Exception;
+
+/**
+ * DOM элемент
+ * @property string $tag имя HTML тега
+ */
 class Element
 {
 
@@ -54,6 +59,20 @@ class Element
     }
 
     /**
+     * Добавляем магии
+     * @param $name
+     * @return mixed
+     * @throws Exception
+     */
+    public function __get($name)
+    {
+        if(in_array($name, ['tag'])) {
+            return $this->{$name};
+        }
+        throw new Exception('Property "'.$name.'" is not defined');
+    }
+
+    /**
      * Метод вызывается перед добавлением в другой объект
      * @param Element $parent
      */
@@ -74,11 +93,32 @@ class Element
 
     /**
      * Получить содержимое
+     * @param string $selector
      * @return self[]|string|null
      */
-    public function getChildren()
+    public function getChildren(string $selector = null)
     {
-        return $this->contain;
+        if($selector === null) {
+            return $this->contain;
+        }
+        /** Распозначем что за селектор: */
+        /** Выборка по ID */
+        if(Common::match('/[#].+/ui', $selector)) {
+            // TODO
+        }
+        /** Выборка по классу */
+        elseif(Common::match('/[\.].+/ui', $selector)) {
+            // TODO
+        }
+        /** Выборка по имени тега */
+        else {
+            $selector = strtolower($selector);
+            foreach($this->contain as $element) {
+                if($element->tag == $selector) {
+                    return $element;
+                }
+            }
+        }
     }
 
     /**
