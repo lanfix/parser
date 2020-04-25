@@ -1,0 +1,29 @@
+{
+    "name": "lanfix/parser",
+    "description": "Parser for web-pages",
+    "keywords": ["php7", "parser"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "lanfix",
+            "email": "lanfix.object@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.0.0",
+        "ext-mbstring": "*",
+        "ext-iconv": "*"
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://asset-packagist.org"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "lanfix\\parser\\": ""
+        }
+    }
+}
