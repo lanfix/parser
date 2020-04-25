@@ -8,6 +8,7 @@ use Exception;
  * Единица из DOM дерева
  * @property string $tag имя HTML тега
  * @property int $type тип элемента (тег, одиночный тег, текст)
+ * @property int $classes список классов
  */
 class Element
 {
@@ -63,6 +64,38 @@ class Element
     private $parent;
 
     /**
+     * Подходит ли данный класс под селектор
+     * @param string $selector
+     * @return bool
+     */
+    private function isCompare(string $selector)
+    {
+        /** Распозначем что за селектор: */
+        /** Выборка по ID */
+        if(Common::match('/[#].+/ui', $selector)) {
+            Common::cut('/[#]/ui', $selector);
+            if($this->getAttribute('id') === $selector) {
+                return true;
+            }
+        }
+        /** Выборка по классу */
+        elseif(Common::match('/[\.].+/ui', $selector)) {
+            Common::cut('/[\.]/ui', $selector);
+            if(in_array($selector, $this->classes)) {
+                return true;
+            }
+        }
+        /** Выборка по имени тега */
+        else {
+            $selector = strtolower($selector);
+            if($this->tag === $selector) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * @param string $tagName
      * @param array|string|null $contain
      * @param array $attrs
@@ -95,7 +128,7 @@ class Element
      */
     public function __get($name)
     {
-        if(in_array($name, ['tag', 'type'])) {
+        if(in_array($name, ['tag', 'type', 'classes'])) {
             return $this->{$name};
         }
         throw new Exception('Property "'.$name.'" is not defined');
@@ -136,6 +169,11 @@ class Element
         if($selector === null) {
             return $this->contain;
         }
+        foreach($this->contain as $element) {
+            if($element->isCompare($selector)) {
+                return $element;
+            }
+        }
         /** Распозначем что за селектор: */
         /** Выборка по ID */
         if(Common::match('/[#].+/ui', $selector)) {
@@ -165,6 +203,37 @@ class Element
             }
         }
         return null;
+    }
+
+    /**
+     * Найти элемент по селектору
+     * @param string $selector
+     * @return Element[]
+     */
+    public function find(string $selector)
+    {
+        $searchedElements = [];
+        foreach($this->contain as $element) {
+            /** @var Element $element */
+            if(!$element->isTag()) continue;
+            if($element->isCompare($selector)) {
+                $searchedElements[] = $element;
+            }
+            foreach($element->find($selector) as $nestedElement) {
+                $searchedElements[] = $nestedElement;
+            }
+        }
+        return $searchedElements;
+    }
+
+    /**
+     * Найти первый элемент с таким селектором в DOM
+     * @param string $selector
+     * @return Element|null
+     */
+    public function findOne(string $selector)
+    {
+        return $this->find($selector)[0] ?? null;
     }
 
     /**
@@ -221,6 +290,28 @@ class Element
     public function addAttribute(string $key, string $value = '')
     {
         $this->attr->{$key} = $value;
+    }
+
+    /**
+     * Получить текст из данного элемента, а также вложенных
+     * @return string
+     */
+    public function asText()
+    {
+        $finalText = '';
+        foreach($this->contain as $element) {
+            /** @var Element $element */
+            if($element->isText()) {
+                $finalText .= $element->contain;
+                continue;
+            }
+            if(!$element->isTag()) {
+                continue;
+            }
+            $finalText .= ' ' . $element->asText();
+        }
+        Common::trim($finalText);
+        return $finalText;
     }
 
 }
