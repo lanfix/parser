@@ -39,9 +39,19 @@ class Document
         $this->dom = $htmlTag;
     }
 
+    public function getHtml()
+    {
+        return $this->dom;
+    }
+
     public function getHead()
     {
         return $this->dom->getChildren('head');
+    }
+
+    public function getBody()
+    {
+        return $this->dom->getChildren('body');
     }
 
 }

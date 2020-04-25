@@ -5,11 +5,19 @@ namespace src;
 use Exception;
 
 /**
- * DOM элемент
+ * Единица из DOM дерева
  * @property string $tag имя HTML тега
+ * @property int $type тип элемента (тег, одиночный тег, текст)
  */
 class Element
 {
+
+    /** Элемент является обычным HTML тегом */
+    const TYPE_TAG = 1;
+    /** Элемент является одиночным HTML тегом (не может иметь контента) */
+    const TYPE_ALONE = 2;
+    /** Элемент является блоком текста */
+    const TYPE_TEXT = 3;
 
     /**
      * @var int уникальный id элемента
@@ -22,8 +30,13 @@ class Element
     private $tag = '';
 
     /**
-     * Если тег одиночный, наподобие <br>, то $contain == null
-     * Если строка, то контент - обычный текст
+     * @var int тип элемента
+     */
+    private $type = 0;
+
+    /**
+     * Если тег одиночный, наподобие <br>, то $contain == null,
+     * если строка, то контент - обычный текст
      * @var self[]|string|null внутреннее содержимое тега
      */
     private $contain = null;
@@ -56,6 +69,8 @@ class Element
         $this->contain = $contain;
         $this->attr = (object)$attrs;
         self::$autoIncrement++;
+        /** Выставляем тип в зависимости от содержимого контента */
+        $this->type = is_array($contain) ? 1 : ($contain === null ? 2 : 3);
     }
 
     /**
@@ -66,7 +81,7 @@ class Element
      */
     public function __get($name)
     {
-        if(in_array($name, ['tag'])) {
+        if(in_array($name, ['tag', 'type'])) {
             return $this->{$name};
         }
         throw new Exception('Property "'.$name.'" is not defined');
@@ -92,12 +107,18 @@ class Element
     }
 
     /**
-     * Получить содержимое
+     * Получить содержимое.
+     * Возвращеет пустой массив если ничего не найдено при выборке по классу.
+     * Возвращает null если ичего не найдено при выборке в остальных случаях.
      * @param string $selector
      * @return self[]|string|null
+     * @throws Exception
      */
     public function getChildren(string $selector = null)
     {
+        if($this->isAloneTag() || $this->isText()) {
+            throw new Exception('You can get children only from usual html tag');
+        }
         if($selector === null) {
             return $this->contain;
         }
@@ -119,6 +140,34 @@ class Element
                 }
             }
         }
+        return null;
+    }
+
+    /**
+     * Является ли элемент просым html тегом
+     * @return bool
+     */
+    public function isTag()
+    {
+        return $this->type === self::TYPE_TAG;
+    }
+
+    /**
+     * Является ли элемент одиночным html тегом
+     * @return bool
+     */
+    public function isAloneTag()
+    {
+        return $this->type === self::TYPE_ALONE;
+    }
+
+    /**
+     * Является ли элемент блоком текста
+     * @return bool
+     */
+    public function isText()
+    {
+        return $this->type === self::TYPE_TEXT;
     }
 
     /**
@@ -131,11 +180,21 @@ class Element
     }
 
     /**
+     * Получить HTML атрибут по имени
+     * @param string $key
+     * @return string|null
+     */
+    public function getAttribute(string $key)
+    {
+        return $this->attr->{$key} ?? null;
+    }
+
+    /**
      * Дабавить HTML атрибут для этемента
      * @param string $key
      * @param string $value
      */
-    public function addAttr(string $key, string $value = '')
+    public function addAttribute(string $key, string $value = '')
     {
         $this->attr->{$key} = $value;
     }
