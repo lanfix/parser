@@ -1,7 +1,10 @@
 <?php
 
-use src\Document;
-use src\Element;
+namespace lanfix\parser;
+
+use lanfix\parser\src\Document;
+use lanfix\parser\src\Element;
+use Exception;
 
 /**
  * @property Document $document

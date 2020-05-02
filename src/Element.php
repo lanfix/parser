@@ -1,6 +1,6 @@
 <?php
 
-namespace src;
+namespace lanfix\parser\src;
 
 use Exception;
 
@@ -87,6 +87,9 @@ class Element
         }
         /** Выборка по имени тега */
         else {
+            if($selector == '*') {
+                return true;
+            }
             $selector = strtolower($selector);
             if($this->tag === $selector) {
                 return true;

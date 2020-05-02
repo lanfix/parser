@@ -1,6 +1,6 @@
 <?php
 
-namespace src;
+namespace lanfix\parser\src;
 
 use Exception;
 
