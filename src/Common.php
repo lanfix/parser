@@ -113,6 +113,9 @@ class Common
         $isAttrValue = false;
         $isAttrValueArea = false;
         $attrList = [];
+        /** Поиск скриптов */
+        $isScript = false;
+        $script = '';
         /** Текст внутри тегов */
         $text = '';
         /** @var Element $nowElement */
@@ -120,8 +123,26 @@ class Common
         /** Парсим HTML */
         for($iter = 0; $iter < $htmlLength; $iter++) {
             $sym = $html[$iter];
+            if(!$tagOpen && $isScript && $sym === '<' && !$script) {
+                $script = '';
+                $tagName = '';
+                $isScript = false;
+                $tagOpen = true;
+            }
+            /** Начало тега (если есть текст) */
+            elseif(!$tagOpen && $isScript && $sym === '<') {
+                $element = new Element('', $script);
+                $parentElement->append($element);
+                $script = '';
+                $tagName = '';
+                $isScript = false;
+                $tagOpen = true;
+            }
+            elseif($isScript) {
+                $script .= $sym;
+            }
             /** Завершение ооткрывающего тега */
-            if($tagOpen && $sym === '>' && !$isCloseTag) {
+            elseif($tagOpen && $sym === '>' && !$isCloseTag) {
                 if($attrName) $attrList[$attrName] = $attrValue;
                 $tagName = strtolower($tagName);
                 $element = new Element($tagName, [], $attrList);
@@ -130,6 +151,9 @@ class Common
                 if(!in_array($tagName, self::ALONE_TAGS)) {
                     $nesting++;
                     $parentElement = $element;
+                }
+                if($tagName == 'script') {
+                    $isScript = true;
                 }
                 $tagName = '';
                 $tagOpen = false;
@@ -149,8 +173,8 @@ class Common
             elseif($tagOpen && $isAttrValueArea && $isAttrValue &&
                 /** Значение было в кавычках */
                 ($attrInQuotes && in_array($sym, ['"', '\'']) ||
-                /** Значение было без кавычек - находим первый пробел */
-                !$attrInQuotes && self::symIsSpace($sym))
+                    /** Значение было без кавычек - находим первый пробел */
+                    !$attrInQuotes && self::symIsSpace($sym))
             ) {
                 $attrInQuotes = false;
                 $isAttrValue = false;
