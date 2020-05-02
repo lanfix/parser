@@ -24,8 +24,8 @@ class Document
     public function __construct($html)
     {
         /** Получаем DOCTYPE и удаляем его из контента чтобы не мешал */
-        $this->doctype = Common::parseOne('/<!DOCTYPE (.+)>/im', $html);
-        Common::cut('/<!DOCTYPE (.+)>/im', $html);
+        $this->doctype = Common::parseOne('/<!DOCTYPE (.+)>/imU', $html);
+        Common::cut('/<!DOCTYPE (.+)>/imU', $html);
         /** Ищем <html>, если нет - создаем */
         if(!$htmlInside = Common::parseOne('/<html.*>(.*)<\/html>/imusU', $html)) {
             $htmlInside = '<head></head><body>'.$html.'</body>';
