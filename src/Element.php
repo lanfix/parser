@@ -295,10 +295,11 @@ class Element
     /**
      * Получить HTML атрибут по имени
      * @param string $key
-     * @return string|null
+     * @return string|object|null
      */
-    public function getAttribute(string $key)
+    public function getAttribute($key = null)
     {
+        if(!$key) return $this->attr;
         return $this->attr->{$key} ?? null;
     }
 
