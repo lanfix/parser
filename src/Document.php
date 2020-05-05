@@ -26,6 +26,9 @@ class Document
         /** Получаем DOCTYPE и удаляем его из контента чтобы не мешал */
         $this->doctype = Common::parseOne('/<!DOCTYPE (.+)>/imU', $html);
         Common::cut('/<!DOCTYPE (.+)>/imU', $html);
+        Common::cut('/<!--.*-->/imU', $html);
+        Common::cut('/<script.*>.*<\/script>/imusU', $html);
+        Common::cut('/<style.*>.*<\/style>/imusU', $html);
         /** Ищем <html>, если нет - создаем */
         if(!$htmlInside = Common::parseOne('/<html.*>(.*)<\/html>/imusU', $html)) {
             $htmlInside = '<head></head><body>'.$html.'</body>';

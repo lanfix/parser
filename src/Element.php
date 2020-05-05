@@ -36,13 +36,6 @@ class Element
     private $type = 0;
 
     /**
-     * Если тег одиночный, наподобие <br>, то $contain == null,
-     * если строка, то контент - обычный текст
-     * @var self[]|string|null внутреннее содержимое тега
-     */
-    private $contain = null;
-
-    /**
      * Список атрибутов данного DOM элемента
      * @var object атрибуты тега [key => val]
      */
@@ -57,6 +50,13 @@ class Element
      * Счетчик для генерации уникальных id элемента
      */
     private static $autoIncrement = 0;
+
+    /**
+     * Если тег одиночный, наподобие <br>, то $contain == null,
+     * если строка, то контент - обычный текст
+     * @var self[]|string|null внутреннее содержимое тега
+     */
+    private $contain = null;
 
     /**
      * @var Element|null родительский элемент
@@ -209,20 +209,37 @@ class Element
     }
 
     /**
-     * Найти элемент по селектору
+     * Найти элемент по селектору.
+     * ------------------------------
+     * .content .search-results .title
+     * #main .page-contain span
+     * ------------------------------
      * @param string $selector
      * @return Element[]
      */
     public function find(string $selector)
     {
         $searchedElements = [];
+        $baseSelectorChain = $selector;
+        $selectors = explode(' ', $selector);
+        $activeSelector = array_shift($selectors);
+        $selector = implode(' ', $selectors);
         foreach($this->contain as $element) {
             /** @var Element $element */
             if(!$element->isTag()) continue;
-            if($element->isCompare($selector)) {
-                $searchedElements[] = $element;
+            if($element->isCompare($activeSelector)) {
+                $searchedElements = array_merge(
+                    ($searchedElements),
+                    /**
+                     * Если еще остались какие-либо селекторы в цепочке, то
+                     * продолжаем искать глубже.
+                     * Если это элемент, который подошел под конечный селектр
+                     * в цепочке - закладываем его в ответ.
+                     */
+                    ($selector ? $this->find($selector) : [$element])
+                );
             }
-            foreach($element->find($selector) as $nestedElement) {
+            foreach($element->find($baseSelectorChain) as $nestedElement) {
                 $searchedElements[] = $nestedElement;
             }
         }
@@ -315,6 +332,11 @@ class Element
         }
         Common::trim($finalText);
         return $finalText;
+    }
+
+    public function deleteContain()
+    {
+        $this->contain = null;
     }
 
 }
