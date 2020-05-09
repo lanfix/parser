@@ -345,7 +345,14 @@ class Element
         $finalText = '';
         /** Если тег - то есть содержимое */
         if($this->isTag()) {
-            $finalText .= '<' . $this->tag . '>';
+            $finalText .= '<' . $this->tag;
+            if($saveAttr) {
+                /** Накручиваем атрибуты */
+                foreach($this->attr as $attrName => $attrVal) {
+                    $finalText .= ' ' . $attrName . '="' . $attrVal . '"';
+                }
+            }
+            $finalText .= '>';
             foreach($this->contain as $element) {
                 /** Обходим вложенные */
                 $finalText .= $element->asHtml($saveAttr);
