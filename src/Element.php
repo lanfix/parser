@@ -68,7 +68,7 @@ class Element
      * @param string $selector
      * @return bool
      */
-    private function isCompare(string $selector)
+    public function isCompare(string $selector)
     {
         /** Распозначем что за селектор: */
         /** Выборка по ID */
@@ -332,6 +332,34 @@ class Element
             $finalText .= ' ' . $element->asText();
         }
         Common::trim($finalText);
+        return $finalText;
+    }
+
+    /**
+     * Получить элемент в виде HTML
+     * @param bool $saveAttr
+     * @return string
+     */
+    public function asHtml($saveAttr = true)
+    {
+        $finalText = '';
+        /** Если тег - то есть содержимое */
+        if($this->isTag()) {
+            $finalText .= '<' . $this->tag . '>';
+            foreach($this->contain as $element) {
+                /** Обходим вложенные */
+                $finalText .= $element->asHtml($saveAttr);
+            }
+            $finalText .= '</' . $this->tag . '>';
+        }
+        /** Если одиночный тег - рендерим только его */
+        elseif($this->isAloneTag()) {
+            $finalText .= '<' . $this->tag . '>';
+        }
+        /** Если текст - рендерим только текст */
+        else {
+            $finalText .= $this->contain;
+        }
         return $finalText;
     }
 
