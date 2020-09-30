@@ -219,28 +219,41 @@ class Element
      */
     public function find(string $selector)
     {
+        /**
+         * Разбиваем на несколько серекторов
+         * @example .title-one, .title-two
+         */
+        $selectors = array_map(function ($selector) {
+            return trim($selector);
+        }, explode(',', $selector));
+        /**
+         * Производим поиск.
+         * Обходим весь список селекторов.
+         */
         $searchedElements = [];
-        $baseSelectorChain = $selector;
-        $selectors = explode(' ', $selector);
-        $activeSelector = array_shift($selectors);
-        $selector = implode(' ', $selectors);
-        foreach($this->contain as $element) {
-            /** @var Element $element */
-            if(!$element->isTag()) continue;
-            if($element->isCompare($activeSelector)) {
-                $searchedElements = array_merge(
-                    ($searchedElements),
-                    /**
-                     * Если еще остались какие-либо селекторы в цепочке, то
-                     * продолжаем искать глубже.
-                     * Если это элемент, который подошел под конечный селектр
-                     * в цепочке - закладываем его в ответ.
-                     */
-                    ($selector ? $this->find($selector) : [$element])
-                );
-            }
-            foreach($element->find($baseSelectorChain) as $nestedElement) {
-                $searchedElements[] = $nestedElement;
+        foreach ($selectors as $selector) {
+            $baseSelectorChain = $selector;
+            $selectors = explode(' ', $selector);
+            $activeSelector = array_shift($selectors);
+            $selector = implode(' ', $selectors);
+            foreach($this->contain as $element) {
+                /** @var Element $element */
+                if(!$element->isTag()) continue;
+                if($element->isCompare($activeSelector)) {
+                    $searchedElements = array_merge(
+                        ($searchedElements),
+                        /**
+                         * Если еще остались какие-либо селекторы в цепочке, то
+                         * продолжаем искать глубже.
+                         * Если это элемент, который подошел под конечный селектр
+                         * в цепочке - закладываем его в ответ.
+                         */
+                        ($selector ? $this->find($selector) : [$element])
+                    );
+                }
+                foreach($element->find($baseSelectorChain) as $nestedElement) {
+                    $searchedElements[] = $nestedElement;
+                }
             }
         }
         return $searchedElements;
