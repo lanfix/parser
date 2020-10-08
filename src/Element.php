@@ -333,6 +333,11 @@ class Element
     public function asText()
     {
         $finalText = '';
+        if ($this->type === Element::TYPE_TEXT) {
+            $finalText = $this->contain;
+            Common::trim($this->contain);
+            return $finalText;
+        }
         foreach($this->contain as $element) {
             /** @var Element $element */
             if($element->isText()) {
